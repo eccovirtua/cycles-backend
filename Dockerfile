@@ -10,7 +10,7 @@ FROM openjdk:17-jdk-slim AS build
 WORKDIR /app
 
 # Copiamos los archivos de configuración y código fuente a la imagen
-COPY ./build.gradle.kts ./settings.gradle.kts ./gradle.properties ./
+COPY ./build.gradle.kts ./settings.gradle.kts ./
 COPY ./gradle ./gradle
 COPY ./src ./src
 
