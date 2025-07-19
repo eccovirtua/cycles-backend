@@ -6,6 +6,9 @@ WORKDIR /app
 # Copiar los archivos del proyecto
 COPY . .
 
+# ✅ Dar permisos de ejecución a gradlew
+RUN chmod +x gradlew
+
 # Compilar sin usar el demonio
 RUN ./gradlew clean bootJar --no-daemon
 
