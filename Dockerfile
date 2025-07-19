@@ -1,33 +1,24 @@
-FROM ubuntu:latest
-LABEL authors="Admin"
+# Etapa 1: Compilar con Java 21
+FROM eclipse-temurin:21-jdk AS build
 
-ENTRYPOINT ["top", "-b"]
-
-# Usamos una imagen oficial de OpenJDK 17 para construir la app
-FROM openjdk:17-jdk-slim AS build
-
-# Definimos el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiamos los archivos de configuración y código fuente a la imagen
-COPY ./build.gradle.kts ./settings.gradle.kts ./
-COPY ./gradle ./gradle
-COPY ./src ./src
+# Copiar los archivos del proyecto
+COPY . .
 
-# Construimos el proyecto y empaquetamos la app como JAR
+# Compilar sin usar el demonio
 RUN ./gradlew clean bootJar --no-daemon
 
-# Segunda etapa: creamos la imagen final para producción
-FROM openjdk:17-jdk-slim
+# Etapa 2: Imagen liviana para ejecución
+FROM eclipse-temurin:21-jre
 
-# Directorio donde se ejecutará la app
 WORKDIR /app
 
-# Copiamos el JAR construido en la etapa anterior
+# Copiar el .jar generado desde la etapa de compilación
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Puerto en el que corre la app (ajusta si usas otro)
+# Puerto (ajústalo si usas otro)
 EXPOSE 8080
 
-# Comando para ejecutar la app
-ENTRYPOINT ["java","-jar","app.jar"]
+# Ejecutar el .jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
