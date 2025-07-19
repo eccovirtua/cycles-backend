@@ -29,6 +29,8 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	implementation("jakarta.validation:jakarta.validation-api:3.0.2")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("io.github.cdimascio:dotenv-java:3.0.0")//outdated, la de abajo sirve para implementar archivos .env
+	implementation("io.github.cdimascio:java-dotenv:5.2.2")
 
 }
 
