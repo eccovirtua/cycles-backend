@@ -32,6 +32,9 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
+                    // Permitir acceso a la carpeta static y al index:
+                    .requestMatchers("/", "/index.html", "/favicon.svg", "/assets/**").permitAll()
+                    // Permitir login/register sin token
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
