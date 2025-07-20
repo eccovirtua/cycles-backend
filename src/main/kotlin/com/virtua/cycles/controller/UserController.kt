@@ -6,12 +6,14 @@ import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import org.springframework.http.ResponseEntity
 import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
 
 @RestController
 @RequestMapping("/users")
 class UserController(private val userRepository: UserRepository) {
 
     // Crear usuario
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     fun createUser(@Valid @RequestBody user: User): ResponseEntity<User> {
         val savedUser = userRepository.save(user)
@@ -19,6 +21,7 @@ class UserController(private val userRepository: UserRepository) {
     }
 
     // Listar todos los usuarios
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     fun getAllUsers(): ResponseEntity<List<User>> {
         val users = userRepository.findAll()

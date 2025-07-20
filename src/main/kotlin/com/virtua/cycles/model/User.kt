@@ -5,6 +5,11 @@ import jakarta.validation.constraints.NotBlank
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.LocalDateTime
+//seguridad
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
+
 
 @Document(collection = "users")
 data class User(
@@ -19,8 +24,29 @@ data class User(
     val age: Int? = null,
 
     @field:NotBlank(message = "la contraseña es obligatoria")
-    val password: String,
+    private val password: String,
+
+    val role: Role,
+
 
     val cratedAt: LocalDateTime = LocalDateTime.now(),
     val updatedAt: LocalDateTime = LocalDateTime.now()
-)
+) : UserDetails {
+    enum class Role {
+        USER, ADMIN
+    }
+    override fun getAuthorities(): Collection<GrantedAuthority> =
+        listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
+
+    override fun getPassword(): String = password
+
+    override fun getUsername(): String = email
+
+    override fun isAccountNonExpired(): Boolean = true
+
+    override fun isAccountNonLocked(): Boolean = true
+
+    override fun isCredentialsNonExpired(): Boolean = true
+
+    override fun isEnabled(): Boolean = true
+}
