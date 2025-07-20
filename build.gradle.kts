@@ -33,6 +33,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("io.github.cdimascio:dotenv-java:3.0.0")//outdated, la de abajo sirve para implementar archivos .env
 	implementation("io.github.cdimascio:java-dotenv:5.2.2")
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5") // para usar Jackson en JWT
 
 }
 
