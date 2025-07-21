@@ -52,4 +52,4 @@ out/
 
 #variables de entorno con credenciales de la bd
 .env
-src/main/resources/application.properties/
+.src/main/resources/application.properties/
