@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProtectedRoute from "./ProtectedRoute";
+import './App.css';
+
 
 const App = () => {
     return (

@@ -29,9 +29,13 @@ class JwtAuthenticationFilter(
             val username = jwtService.extractUsername(jwt)
             val role = jwtService.extractClaim(jwt) { claims -> claims.get("role", String::class.java) } ?: "USER"
             val userDetails = userDetailsService.loadUserByUsername(username)
+
             if (jwtService.isTokenValid(jwt, userDetails)) {
                 val authority = SimpleGrantedAuthority("ROLE_$role") // aquí sí va ROLE_
-                val authToken = UsernamePasswordAuthenticationToken(userDetails, null, listOf(authority))
+                val authToken = UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.authorities)
                 authToken.details = WebAuthenticationDetailsSource().buildDetails(request)
                 SecurityContextHolder.getContext().authentication = authToken
             }

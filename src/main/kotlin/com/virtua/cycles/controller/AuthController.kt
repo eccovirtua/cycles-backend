@@ -41,18 +41,24 @@ class AuthController(
 
     @PostMapping("/login")
     fun login(@RequestBody authRequest: AuthenticationRequest): ResponseEntity<AuthenticationResponse> {
+        // 1) Loguear lo que llega:
+        println("🕵️‍♂️ Login attempt con: $authRequest")
+
         try {
-            // Autenticar credenciales
-            val authenticationToken = UsernamePasswordAuthenticationToken(authRequest.email, authRequest.password)
+            val authenticationToken =
+                UsernamePasswordAuthenticationToken(authRequest.email, authRequest.password)
             val authentication = authenticationManager.authenticate(authenticationToken)
 
-            // Cargar detalles del usuario y generar token
+            // 2) Si pasamos, devolvemos el token
             val userDetails = authentication.principal as org.springframework.security.core.userdetails.User
             val jwt = jwtService.generateToken(userDetails)
+            println("✅ Authentication OK, token generado")
             return ResponseEntity.ok(AuthenticationResponse(jwt))
 
         } catch (ex: Exception) {
-            return ResponseEntity.status(401).build()  // Credenciales inválidas
+            // 3) Loguear la excepción para ver la causa
+            println("🚨 Error autenticando: ${ex::class.simpleName}: ${ex.message}")
+            return ResponseEntity.status(401).build()
         }
     }
 }

@@ -10,16 +10,18 @@ export default function LoginPage() {
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
+        console.log("▶️ Enviando credenciales:", { email, password })
 
-        const response = await fetch("http://localhost:8080/api/auth/login", {
+        const response = await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: email, password }),
+                body: JSON.stringify({ email, password }) // ← BIEN
         });
 
         if (response.ok) {
             const data = await response.json();
-            localStorage.setItem("token", data.jwtToken);
+            const token = data.jwtToken;
+            localStorage.setItem("token", token);
             login(email);
             navigate("/dashboard");
         } else {
@@ -36,6 +38,7 @@ export default function LoginPage() {
                     placeholder="Correo"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    name="email"
                     className="border p-2"
                     required
                 />
