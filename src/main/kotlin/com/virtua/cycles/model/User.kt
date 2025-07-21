@@ -26,7 +26,8 @@ data class User(
     @field:NotBlank(message = "la contraseña es obligatoria")
     private val password: String,
 
-    val role: Role,
+    val role: Role = Role.USER,
+
 
 
     val cratedAt: LocalDateTime = LocalDateTime.now(),
