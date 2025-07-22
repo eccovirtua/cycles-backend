@@ -11,6 +11,9 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.*
 import com.virtua.cycles.dto.AuthenticationRequest
 import com.virtua.cycles.dto.AuthenticationResponse
+import org.apache.coyote.BadRequestException
+
+//Servicio de autenticación y registro. Se valida que no exista un usuario con mail ya registrado y autenticación (login)
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,11 +30,15 @@ class AuthController(
         if (userRepository.findByEmail(req.email) != null) {
             return ResponseEntity.status(409).body("Email ya registrado")
         }
-        // 2) Hashear la contraseña y crear el usuario (role = USER)
+        //2.1 Obtener y validar la edad
+        val age = req.age ?: throw BadRequestException("La edad es obligatoria")
+        if (age < 10) throw BadRequestException("Debes tener al menos 10 años")
+
+        // 2.2) Hashear la contraseña y crear el usuario (role = USER)
         val user = User(
             name = req.name,
             email = req.email,
-            age = req.age,
+            age = age,
             password = passwordEncoder.encode(req.password),
             role = User.Role.USER
         )
