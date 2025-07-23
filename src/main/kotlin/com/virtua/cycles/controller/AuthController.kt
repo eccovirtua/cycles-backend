@@ -85,7 +85,7 @@ class AuthController(
 
 
 
-    @PostMapping("/forgot-password")
+    @PutMapping("/forgot-password")
     fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<GenericResponse> {
         return passwordResetService.generateAndSendCode(request.email)
     }
