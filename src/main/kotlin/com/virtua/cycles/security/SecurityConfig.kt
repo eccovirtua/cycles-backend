@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.servlet.config.annotation.CorsRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 
 @EnableMethodSecurity
@@ -46,5 +48,15 @@ class SecurityConfig(
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
+    }
+
+    @Bean
+    fun corsConfigurer(): WebMvcConfigurer = object : WebMvcConfigurer {
+        override fun addCorsMappings(registry: CorsRegistry) {
+            registry.addMapping("/**")
+                .allowedMethods("*")
+                .allowedOrigins("https://cycles-backend.onrender.com")     // o "https://tu-dominio-android.com"
+                .allowCredentials(true)
+        }
     }
 }
