@@ -37,6 +37,7 @@ class SecurityConfig(
                     // Permitir login/register sin token
                     .requestMatchers("/api/auth").permitAll()
                     .requestMatchers("/api/auth/login").permitAll()
+                    .requestMatchers("/api/auth/login").permitAll()
                     .requestMatchers("/admin/**").hasRole("ADMIN")
                     .requestMatchers("/users/**").hasRole("ADMIN")
                     .anyRequest().authenticated()

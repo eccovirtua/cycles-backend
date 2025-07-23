@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*
 import com.virtua.cycles.dto.AuthenticationRequest
 import com.virtua.cycles.dto.AuthenticationResponse
 import org.apache.coyote.BadRequestException
+//import org.apache.coyote.Response
+import org.springframework.http.HttpStatus
 
 //Servicio de autenticación y registro. Se valida que no exista un usuario con mail ya registrado y autenticación (login)
 
@@ -43,7 +45,11 @@ class AuthController(
             role = User.Role.USER
         )
         userRepository.save(user)
-        return ResponseEntity.status(201).build()
+        val token = jwtService.generateToken(user) //generar token a partir de usuario registrado/guardado
+
+        return ResponseEntity
+        .status(HttpStatus.CREATED)
+            .body(AuthenticationResponse(token))
     }
 
     @PostMapping("/login")
