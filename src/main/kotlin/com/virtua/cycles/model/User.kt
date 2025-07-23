@@ -9,6 +9,7 @@ import java.time.LocalDateTime
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.data.mongodb.core.mapping.Field
 
 
 @Document(collection = "users")
@@ -24,7 +25,9 @@ data class User(
     val age: Int? = null,
 
     @field:NotBlank(message = "la contraseña es obligatoria")
-    private val password: String,
+    @Field("password")
+    private var _password: String,
+
 
     val role: Role = Role.USER,
 
@@ -39,7 +42,10 @@ data class User(
     override fun getAuthorities(): Collection<GrantedAuthority> =
         listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
 
-    override fun getPassword(): String = password
+    override fun getPassword(): String = _password
+    fun setPassword(newPassword: String) {
+        _password = newPassword
+    }
 
     override fun getUsername(): String = email
 

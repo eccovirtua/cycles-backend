@@ -15,6 +15,10 @@ import org.apache.coyote.BadRequestException
 //import org.apache.coyote.Response
 import org.springframework.http.HttpStatus
 import com.virtua.cycles.dto.ForgotPasswordRequest
+import com.virtua.cycles.dto.GenericResponse
+import com.virtua.cycles.dto.ResetPasswordRequest
+import com.virtua.cycles.dto.VerifyCodeRequest
+import com.virtua.cycles.service.PasswordResetService
 
 
 //Servicio de autenticación y registro. Se valida que no exista un usuario con mail ya registrado y autenticación (login)
@@ -25,7 +29,8 @@ class AuthController(
     private val authenticationManager: AuthenticationManager,
     private val jwtService: JwtService,
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val passwordResetService: PasswordResetService
 ) {
 
     @PostMapping("/register")
@@ -43,7 +48,7 @@ class AuthController(
             name = req.name,
             email = req.email,
             age = age,
-            password = passwordEncoder.encode(req.password),
+            _password = passwordEncoder.encode(req.password),
             role = User.Role.USER
         )
         userRepository.save(user)
@@ -78,13 +83,36 @@ class AuthController(
     }
 
 
-    @PostMapping("/forgot-password")
-    fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<Any> {
-        // Simulación de búsqueda del usuario por email
-        val email = request.email
-        println("Simulando recuperación de contraseña para el email: $email")
 
-        // Simular éxito
-        return ResponseEntity.ok(mapOf("message" to "Si el email existe, se ha enviado un enlace de recuperación"))
+
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<GenericResponse> {
+        return passwordResetService.generateAndSendCode(request.email)
     }
+
+    @PostMapping("/verify-code")
+    fun verifyCode(@RequestBody request: VerifyCodeRequest): ResponseEntity<GenericResponse> {
+        val isValid = passwordResetService.verifyCode(request.email, request.code)
+        return if (isValid)
+            ResponseEntity.ok(GenericResponse("Código válido"))
+        else
+            ResponseEntity.badRequest().body(GenericResponse("Código inválido o expirado"))
+    }
+    @PostMapping("/request-password-reset")
+    fun requestPasswordReset(@RequestBody email: Map<String, String>): ResponseEntity<GenericResponse> {
+        val userEmail = email["email"] ?: return ResponseEntity.badRequest()
+            .body(GenericResponse("El campo 'email' es requerido"))
+        return passwordResetService.generateAndSendCode(userEmail)
+    }
+    // Endpoint para establecer nueva contraseña con código
+    @PostMapping("/reset-password")
+    fun resetPassword(@RequestBody request: ResetPasswordRequest): ResponseEntity<GenericResponse> {
+        return passwordResetService.resetPassword(request)
+    }
+
+
+
+
+
+
 }
