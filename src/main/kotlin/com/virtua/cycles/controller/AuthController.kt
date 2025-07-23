@@ -14,6 +14,8 @@ import com.virtua.cycles.dto.AuthenticationResponse
 import org.apache.coyote.BadRequestException
 //import org.apache.coyote.Response
 import org.springframework.http.HttpStatus
+import com.virtua.cycles.dto.ForgotPasswordRequest
+
 
 //Servicio de autenticación y registro. Se valida que no exista un usuario con mail ya registrado y autenticación (login)
 
@@ -73,5 +75,16 @@ class AuthController(
             println("🚨 Error autenticando: ${ex::class.simpleName}: ${ex.message}")
             return ResponseEntity.status(401).build()
         }
+    }
+
+
+    @PostMapping("/forgot-password")
+    fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<Any> {
+        // Simulación de búsqueda del usuario por email
+        val email = request.email
+        println("Simulando recuperación de contraseña para el email: $email")
+
+        // Simular éxito
+        return ResponseEntity.ok(mapOf("message" to "Si el email existe, se ha enviado un enlace de recuperación"))
     }
 }
