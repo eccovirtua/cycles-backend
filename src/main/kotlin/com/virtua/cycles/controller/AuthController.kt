@@ -85,7 +85,7 @@ class AuthController(
 
 
 
-    @PutMapping("/forgot-password")
+    @PostMapping("/forgot-password")
     fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<GenericResponse> {
         return passwordResetService.generateAndSendCode(request.email)
     }
@@ -105,7 +105,7 @@ class AuthController(
         return passwordResetService.generateAndSendCode(userEmail)
     }
     // Endpoint para establecer nueva contraseña con código
-    @PostMapping("/reset-password")
+    @PutMapping("/reset-password")
     fun resetPassword(@RequestBody request: ResetPasswordRequest): ResponseEntity<GenericResponse> {
         return passwordResetService.resetPassword(request)
     }
