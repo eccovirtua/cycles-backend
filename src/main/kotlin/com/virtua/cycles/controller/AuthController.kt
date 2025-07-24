@@ -106,7 +106,7 @@ class AuthController(
         return passwordResetService.generateAndSendCode(userEmail)
     }
     // Endpoint para establecer nueva contraseña con código
-    @PostMapping("/reset-password")
+    @PutMapping("/reset-password")
     fun resetPassword(@RequestBody request: ResetPasswordRequest): ResponseEntity<GenericResponse> {
         return passwordResetService.resetPassword(request)
     }
