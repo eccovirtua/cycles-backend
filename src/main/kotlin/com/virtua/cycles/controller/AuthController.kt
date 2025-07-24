@@ -19,6 +19,7 @@ import com.virtua.cycles.dto.GenericResponse
 import com.virtua.cycles.dto.ResetPasswordRequest
 import com.virtua.cycles.dto.VerifyCodeRequest
 import com.virtua.cycles.service.PasswordResetService
+import jakarta.servlet.http.HttpServletRequest
 
 
 //Servicio de autenticación y registro. Se valida que no exista un usuario con mail ya registrado y autenticación (login)
@@ -105,9 +106,18 @@ class AuthController(
         return passwordResetService.generateAndSendCode(userEmail)
     }
     // Endpoint para establecer nueva contraseña con código
-    @PostMapping("/reset-password")
+    @PutMapping("/reset-password")
     fun resetPassword(@RequestBody request: ResetPasswordRequest): ResponseEntity<GenericResponse> {
         return passwordResetService.resetPassword(request)
+    }
+
+    @RestController
+    class LoggingController {
+        @RequestMapping("/**")
+        fun logAll(request: HttpServletRequest) {
+            println("Método recibido: ${request.method}")
+            println("Ruta recibida: ${request.requestURI}")
+        }
     }
 
 }
