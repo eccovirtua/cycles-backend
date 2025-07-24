@@ -36,9 +36,13 @@ class SecurityConfig(
                 auth
                     // Permitir acceso a las rutas y definir los permisos necesarios
                     .requestMatchers("/", "/index.html", "/vite.svg", "/assets/**").permitAll()
-                    .requestMatchers("/api/auth").permitAll()
+                    .requestMatchers("/api/auth/register").permitAll()
                     .requestMatchers("/api/auth/login").permitAll()
-                    .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/auth/forgot-password").permitAll()
+                    .requestMatchers("/api/auth/check-username").permitAll()
+
+                    .requestMatchers("/api/auth/update-username").authenticated()
+//                    .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/admin/**").hasRole("ADMIN")
                     .requestMatchers("/users/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
