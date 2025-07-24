@@ -106,18 +106,9 @@ class AuthController(
         return passwordResetService.generateAndSendCode(userEmail)
     }
     // Endpoint para establecer nueva contraseña con código
-    @PutMapping("/reset-password")
+    @PostMapping("/reset-password")
     fun resetPassword(@RequestBody request: ResetPasswordRequest): ResponseEntity<GenericResponse> {
         return passwordResetService.resetPassword(request)
-    }
-
-    @RestController
-    class LoggingController {
-        @RequestMapping("/**")
-        fun logAll(request: HttpServletRequest) {
-            println("Método recibido: ${request.method}")
-            println("Ruta recibida: ${request.requestURI}")
-        }
     }
 
 }
