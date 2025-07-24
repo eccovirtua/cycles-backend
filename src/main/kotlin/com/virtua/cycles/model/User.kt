@@ -15,27 +15,21 @@ import org.springframework.data.mongodb.core.mapping.Field
 @Document(collection = "users")
 data class User(
     @Id val id: String? = null,
-
     @field:NotBlank(message = "User name cannot be blank") //validaciones de campo no rellenado
-    val name: String,
-
+    var name: String,
     @field:NotBlank(message = "el correo no puede estar vacío")
     val email: String,
-
     val age: Int? = null,
-
     @field:NotBlank(message = "la contraseña es obligatoria")
     @Field("password")
     private var _password: String,
-
-
     val role: Role = Role.USER,
-
-
-
     val cratedAt: LocalDateTime = LocalDateTime.now(),
     val updatedAt: LocalDateTime = LocalDateTime.now()
+
+
 ) : UserDetails {
+
     enum class Role {
         USER, ADMIN
     }

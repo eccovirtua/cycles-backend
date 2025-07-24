@@ -19,7 +19,9 @@ import com.virtua.cycles.dto.GenericResponse
 import com.virtua.cycles.dto.ResetPasswordRequest
 import com.virtua.cycles.dto.VerifyCodeRequest
 import com.virtua.cycles.service.PasswordResetService
-import jakarta.servlet.http.HttpServletRequest
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
+
 
 
 //Servicio de autenticación y registro. Se valida que no exista un usuario con mail ya registrado y autenticación (login)
@@ -111,4 +113,42 @@ class AuthController(
         return passwordResetService.resetPassword(request)
     }
 
-}
+    @PostMapping("/check-username")
+    fun checkUsername(@RequestBody body: Map<String,String>): ResponseEntity<GenericResponse> {
+        val name = body["name"] ?:
+        return ResponseEntity
+            .badRequest()
+            .body(GenericResponse("name es requerido"))
+        val exists = userRepository.findByName(name) != null
+        val msg = if(exists) "taken" else "available"
+        return ResponseEntity.ok(GenericResponse(msg))
+//        return ResponseEntity.ok(GenericResponse(
+//            if (exists) "taken" else "available"
+//        ))
+    }
+    @PatchMapping("/update-username")
+    fun updateUsername(
+        @RequestBody body: Map<String,String>,
+        @AuthenticationPrincipal userDetails: UserDetails
+    ): ResponseEntity<GenericResponse> {
+        val name = body["name"] ?:
+        return ResponseEntity
+            .badRequest()
+            .body(GenericResponse("name es requerido"))
+
+        val user = userRepository.findByEmail(userDetails.username)
+            ?: return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(GenericResponse("Usuario no encontrado"))
+
+        user.name = name //asignar directamente
+        userRepository.save(user)
+        return ResponseEntity.ok(GenericResponse("Nombre de usuario actualizado"))
+    }
+
+
+
+
+
+
+}//llave de cierre a  los endpoints
