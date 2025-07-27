@@ -38,60 +38,44 @@ class AuthController(
 
     @PostMapping("/register")
     fun register(@RequestBody req: RegisterRequest): ResponseEntity<Any> {
-        // 1) Verificar si ya existe un usuario con ese email
         if (userRepository.findByEmail(req.email) != null) {
             return ResponseEntity.status(409).body("Email ya registrado")
         }
-        //2.1 Obtener y validar la edad
         val age = req.age ?: throw BadRequestException("La edad es obligatoria")
         if (age < 10) throw BadRequestException("Debes tener al menos 10 años")
 
-        // 2.2) Hashear la contraseña y crear el usuario (role = USER)
         val user = User(
-            name = req.name,
-            email = req.email,
-            age = age,
-            _password = passwordEncoder.encode(req.password),
-            role = User.Role.USER
+            name     = req.name,
+            email    = req.email,
+            age      = age,
+            _password = passwordEncoder.encode(req.password),  // <— CORREGIDO
+            role     = User.Role.USER
         )
         userRepository.save(user)
-        val token = jwtService.generateToken(user) //generar token a partir de usuario registrado/guardado
-
-        return ResponseEntity
-        .status(HttpStatus.CREATED)
+        val token = jwtService.generateToken(user)
+        return ResponseEntity.status(HttpStatus.CREATED)
             .body(AuthenticationResponse(token))
     }
 
     @PostMapping("/login")
     fun login(@RequestBody authRequest: AuthenticationRequest): ResponseEntity<AuthenticationResponse> {
-        // 1) Loguear lo que llega:
-        println("🕵️‍♂️ Login attempt con: $authRequest")
-
-        try {
-            val authenticationToken =
-                UsernamePasswordAuthenticationToken(authRequest.email, authRequest.password)
+        return try {
+            val authenticationToken = UsernamePasswordAuthenticationToken(
+                authRequest.usernameOrEmail,
+                authRequest.password
+            )
             val authentication = authenticationManager.authenticate(authenticationToken)
-
-            // 2) Si pasamos, devolvemos el token
-            val userDetails = authentication.principal as org.springframework.security.core.userdetails.User
-            val jwt = jwtService.generateToken(userDetails)
-            println("✅ Authentication OK, token generado")
-            return ResponseEntity.ok(AuthenticationResponse(jwt))
-
-        } catch (ex: Exception) {
-            // 3) Loguear la excepción para ver la causa
-            println("🚨 Error autenticando: ${ex::class.simpleName}: ${ex.message}")
-            return ResponseEntity.status(401).build()
+            val userDetails    = authentication.principal as UserDetails
+            val jwt            = jwtService.generateToken(userDetails)
+            ResponseEntity.ok(AuthenticationResponse(jwt))
+        } catch (_: Exception) {
+            ResponseEntity.status(401).build()
         }
     }
 
-
-
-
     @PostMapping("/forgot-password")
-    fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<GenericResponse> {
-        return passwordResetService.generateAndSendCode(request.email)
-    }
+    fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<GenericResponse> =
+        passwordResetService.generateAndSendCode(request.email)
 
     @PostMapping("/verify-code")
     fun verifyCode(@RequestBody request: VerifyCodeRequest): ResponseEntity<GenericResponse> {
@@ -101,54 +85,38 @@ class AuthController(
         else
             ResponseEntity.badRequest().body(GenericResponse("Código inválido o expirado"))
     }
-    @PostMapping("/request-password-reset")
-    fun requestPasswordReset(@RequestBody email: Map<String, String>): ResponseEntity<GenericResponse> {
-        val userEmail = email["email"] ?: return ResponseEntity.badRequest()
-            .body(GenericResponse("El campo 'email' es requerido"))
-        return passwordResetService.generateAndSendCode(userEmail)
-    }
-    // Endpoint para establecer nueva contraseña con código
+
     @PutMapping("/reset-password")
-    fun resetPassword(@RequestBody request: ResetPasswordRequest): ResponseEntity<GenericResponse> {
-        return passwordResetService.resetPassword(request)
-    }
+    fun resetPassword(@RequestBody request: ResetPasswordRequest): ResponseEntity<GenericResponse> =
+        passwordResetService.resetPassword(request)
 
     @PostMapping("/check-username")
-    fun checkUsername(@RequestBody body: Map<String,String>): ResponseEntity<GenericResponse> {
-        val name = body["name"] ?:
-        return ResponseEntity
-            .badRequest()
-            .body(GenericResponse("name es requerido"))
+    fun checkUsername(@RequestBody body: Map<String, String>): ResponseEntity<GenericResponse> {
+        val name = body["name"]
+            ?: return ResponseEntity.badRequest().body(GenericResponse("name es requerido"))
         val exists = userRepository.findByName(name) != null
-        val msg = if(exists) "taken" else "available"
+        val msg = if (exists) "taken" else "available"
         return ResponseEntity.ok(GenericResponse(msg))
-//        return ResponseEntity.ok(GenericResponse(
-//            if (exists) "taken" else "available"
-//        ))
     }
+
     @PatchMapping("/update-username")
     fun updateUsername(
-        @RequestBody body: Map<String,String>,
+        @RequestBody body: Map<String, String>,
         @AuthenticationPrincipal userDetails: UserDetails
     ): ResponseEntity<GenericResponse> {
-        val name = body["name"] ?:
-        return ResponseEntity
-            .badRequest()
-            .body(GenericResponse("name es requerido"))
+        val name = body["name"]
+            ?: return ResponseEntity.badRequest().body(GenericResponse("name es requerido"))
 
         val user = userRepository.findByEmail(userDetails.username)
-            ?: return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(GenericResponse("Usuario no encontrado"))
 
-        user.name = name //asignar directamente
+        user.name = name
         userRepository.save(user)
         return ResponseEntity.ok(GenericResponse("Nombre de usuario actualizado"))
     }
+}
 
 
 
-
-
-
-}//llave de cierre a  los endpoints
+//llave de cierre a  los endpoints

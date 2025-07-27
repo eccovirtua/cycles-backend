@@ -3,6 +3,7 @@ package com.virtua.cycles.security
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -14,23 +15,38 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
-
 @EnableMethodSecurity
 @Configuration
 class SecurityConfig(
-    private val jwtAuthFilter: JwtAuthenticationFilter,
+    private val jwtAuthFilter: JwtAuthenticationFilter
 ) {
 
+    /** 1) El encoder de contraseñas */
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
+    /** 2) El proveedor DAO: tu UserDetailsService + el encoder */
     @Bean
-    fun authenticationManager(authConfig: AuthenticationConfiguration): AuthenticationManager =
-        authConfig.authenticationManager
+    fun daoAuthenticationProvider(
+        passwordEncoder: PasswordEncoder,
+        userDetailsService: CustomUserDetailsService
+    ): DaoAuthenticationProvider =
+        DaoAuthenticationProvider().apply {
+            setUserDetailsService(userDetailsService)
+            setPasswordEncoder(passwordEncoder)
+        }
 
+    /** 3) Expone el AuthenticationManager para poder inyectarlo en tus controladores */
     @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun authenticationManager(
+        authConfig: AuthenticationConfiguration
+    ): AuthenticationManager = authConfig.authenticationManager
+
+    /** 4) Cadena de seguridad: registra el DAO provider y tu filtro JWT */
+    @Bean
+    fun securityFilterChain(http: HttpSecurity,daoAuthenticationProvider: DaoAuthenticationProvider): SecurityFilterChain {
         http
+            .authenticationProvider(daoAuthenticationProvider)
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
@@ -53,12 +69,18 @@ class SecurityConfig(
         return http.build()
     }
 
+
+
+
+
+
+    /** 5) Configuración global de CORS si la necesitas */
     @Bean
     fun corsConfigurer(): WebMvcConfigurer = object : WebMvcConfigurer {
         override fun addCorsMappings(registry: CorsRegistry) {
             registry.addMapping("/**")
+                .allowedOrigins("https://tu-frontend.com") // ajusta a tu dominio
                 .allowedMethods("*")
-                .allowedOrigins("https://cycles-backend.onrender.com")     // o "https://tu-dominio-android.com"
                 .allowCredentials(true)
         }
     }
