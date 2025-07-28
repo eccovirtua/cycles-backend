@@ -16,9 +16,11 @@ import org.apache.coyote.BadRequestException
 import org.springframework.http.HttpStatus
 import com.virtua.cycles.dto.ForgotPasswordRequest
 import com.virtua.cycles.dto.GenericResponse
+import com.virtua.cycles.dto.RecommendResponse
 import com.virtua.cycles.dto.ResetPasswordRequest
 import com.virtua.cycles.dto.VerifyCodeRequest
 import com.virtua.cycles.service.PasswordResetService
+import com.virtua.cycles.service.RecsService
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 
@@ -115,8 +117,8 @@ class AuthController(
         userRepository.save(user)
         return ResponseEntity.ok(GenericResponse("Nombre de usuario actualizado"))
     }
-}
+}//llave de cierre a  los endpoints
 
 
 
-//llave de cierre a  los endpoints
+

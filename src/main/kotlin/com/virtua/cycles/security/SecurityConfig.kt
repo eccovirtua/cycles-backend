@@ -56,9 +56,10 @@ class SecurityConfig(
                     .requestMatchers("/api/auth/login").permitAll()
                     .requestMatchers("/api/auth/forgot-password").permitAll()
                     .requestMatchers("/api/auth/check-username").permitAll()
-
+                    .requestMatchers("/api/recommend/**").permitAll()
+                    .requestMatchers("/error").permitAll()
                     .requestMatchers("/api/auth/update-username").authenticated()
-//                    .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/admin/**").hasRole("ADMIN")
                     .requestMatchers("/users/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
