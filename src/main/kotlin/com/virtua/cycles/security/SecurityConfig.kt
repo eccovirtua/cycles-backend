@@ -80,7 +80,7 @@ class SecurityConfig(
     fun corsConfigurer(): WebMvcConfigurer = object : WebMvcConfigurer {
         override fun addCorsMappings(registry: CorsRegistry) {
             registry.addMapping("/**")
-                .allowedOrigins("https://tu-frontend.com") // ajusta a tu dominio
+                .allowedOrigins("https://cycles-backend.onrender.com") // ajusta a tu dominio
                 .allowedMethods("*")
                 .allowCredentials(true)
         }
