@@ -25,7 +25,11 @@ data class User(
     private var _password: String,
     val role: Role = Role.USER,
     val cratedAt: LocalDateTime = LocalDateTime.now(),
-    val updatedAt: LocalDateTime = LocalDateTime.now()
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
+
+    // 🎯 NUEVOS CAMPOS DE PERFIL
+    var bio: String? = null, // Biografía (puede ser opcional)
+    var profileImageUrl: String? = null // URL de la foto de perfil subida
 
 
 ) : UserDetails {
