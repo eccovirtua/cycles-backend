@@ -32,7 +32,8 @@ class UserController(private val userRepository: UserRepository) {
         return (authentication.principal as User).id ?: throw IllegalStateException("User ID not found in security context")
     }
 
-    // 🎯 NUEVO ENDPOINT: Sube la foto de perfil y actualiza la URL en MongoDB.
+    // 🎯 AJUSTE CLAVE: Permite la entrada solo si el usuario está AUTENTICADO.
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/profile/photo")
     fun uploadProfilePhoto(
         @RequestParam("photo") file: MultipartFile // El nombre del campo DEBE ser 'photo'
@@ -74,6 +75,7 @@ class UserController(private val userRepository: UserRepository) {
         // 5. Retorna el objeto completo de usuario
         return ResponseEntity.ok(updatedUser)
     }
+
     // Crear usuario
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
@@ -101,4 +103,3 @@ class UserController(private val userRepository: UserRepository) {
         }
     }
 }
-

@@ -50,7 +50,7 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    // Permitir acceso a las rutas y definir los permisos necesarios
+                    // Permitir acceso a las rutas públicas (sin autenticación)
                     .requestMatchers("/", "/index.html", "/vite.svg", "/assets/**").permitAll()
                     .requestMatchers("/api/auth/register").permitAll()
                     .requestMatchers("/api/auth/login").permitAll()
@@ -58,10 +58,20 @@ class SecurityConfig(
                     .requestMatchers("/api/auth/check-username").permitAll()
                     .requestMatchers("/api/recommend/**").permitAll()
                     .requestMatchers("/error").permitAll()
+                    // Reglas de Auth (Update username requiere estar autenticado)
                     .requestMatchers("/api/auth/update-username").authenticated()
+                    // Permitir el resto de rutas de Auth (si son publicas y no estan listadas arriba)
                     .requestMatchers("/api/auth/**").permitAll()
+
+                    // 🎯 NUEVAS REGLAS DE PERFIL (DEBEN IR ANTES DE /users/**)
+                    // Permitir acceso a la gestión de perfil para CUALQUIER USUARIO AUTENTICADO
+                    .requestMatchers("/users/profile/**").authenticated()
+
+                    // Reglas restringidas
                     .requestMatchers("/admin/**").hasRole("ADMIN")
-                    .requestMatchers("/users/**").hasRole("ADMIN")
+                    .requestMatchers("/users/**").hasRole("ADMIN") // Aplica a /users, /users/id, etc.
+
+                    // Todas las demás rutas requieren autenticación
                     .anyRequest().authenticated()
             }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
@@ -80,7 +90,7 @@ class SecurityConfig(
     fun corsConfigurer(): WebMvcConfigurer = object : WebMvcConfigurer {
         override fun addCorsMappings(registry: CorsRegistry) {
             registry.addMapping("/**")
-                .allowedOrigins("https://cycles-backend.onrender.com") // ajusta a tu dominio
+                .allowedOrigins("https://cycles-backend.onrender.com")
                 .allowedMethods("*")
                 .allowCredentials(true)
         }
