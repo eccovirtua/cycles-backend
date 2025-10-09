@@ -4,39 +4,40 @@ import com.virtua.cycles.dto.PhotoData
 import com.virtua.cycles.model.User
 import com.virtua.cycles.repository.UserRepository
 import jakarta.validation.Valid
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.gridfs.GridFsTemplate
 import org.springframework.web.bind.annotation.*
 import org.springframework.http.ResponseEntity
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.io.IOException
 import java.time.LocalDateTime
-import java.util.UUID
 
 @RestController
 @RequestMapping("/users")
-class UserController(private val userRepository: UserRepository) {
-
-
-    private val uploadDir = Paths.get("data", "profile_photos")
+class UserController(
+    private val userRepository: UserRepository,
+    private val gridFsTemplate: GridFsTemplate
+) {
 
     private fun getAuthenticatedUserId(): String {
         val authentication: Authentication = SecurityContextHolder.getContext().authentication
-        // Asumiendo que el 'principal' es el objeto User o tiene el ID como String
         return (authentication.principal as User).id ?: throw IllegalStateException("User ID not found in security context")
     }
-
-
+    // ----------------------------------------------------
+    // 🎯 LÓGICA DE SUBIDA (GRIDFS IMPLEMENTADO)
+    // ----------------------------------------------------
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/profile/photo")
     fun uploadProfilePhoto(
         @RequestParam("photo") file: MultipartFile
-
-    ): ResponseEntity<User> {
+    ): ResponseEntity<PhotoData> {
 
         val userId = getAuthenticatedUserId()
         val userOptional = userRepository.findById(userId)
@@ -46,34 +47,97 @@ class UserController(private val userRepository: UserRepository) {
         }
         val user = userOptional.get()
 
-        // 1. Crear el directorio si no existe
-        if (Files.notExists(uploadDir)) {
-            Files.createDirectories(uploadDir)
+        // 1. Validar el archivo
+        if (file.isEmpty || file.contentType.isNullOrEmpty()) {
+            return ResponseEntity.badRequest().build()
         }
-
-        // 2. Generar nombre único y guardar archivo
-        val extension = file.originalFilename?.substringAfterLast('.', "") ?: "jpg"
-        val uniqueFileName = "${userId}_${UUID.randomUUID()}.$extension"
-        val targetPath = uploadDir.resolve(uniqueFileName)
 
         try {
-            file.transferTo(targetPath.toFile())
-        } catch (e: Exception) {
+            // 2. Almacenar en GridFS
+            val fileId = gridFsTemplate.store(
+                file.inputStream,                   // El stream del archivo
+                file.originalFilename,              // Nombre del archivo
+                file.contentType                    // Tipo de contenido (ej: image/jpeg)
+            ).toString() // Obtiene el ID del archivo de GridFS
+
+            val downloadUrl = "/users/files/photo/$fileId"
+
+            // 4. Limpiar fotos antiguas (Opcional, se puede mejorar con un servicio)
+            user.profileImageUrl?.let { oldUrl ->
+                val oldFileId = oldUrl.substringAfterLast("/")
+                gridFsTemplate.delete(Query.query(Criteria.where("_id").`is`(oldFileId)))
+            }
+
+
+            // 5. Actualizar el modelo y guardar en MongoDB
+            user.profileImageUrl = downloadUrl
+            user.updatedAt = LocalDateTime.now()
+            userRepository.save(user)
+
+            // 6. Retornar la nueva URL al cliente
+            return ResponseEntity.ok(PhotoData(downloadUrl))
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+            // Error al leer/escribir el stream (común en despliegues)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         }
-
-        // 3. Crear la URL pública para la app móvil
-        // Corresponde al mapeo en WebConfig
-        val newPublicUrl = "/public/images/$uniqueFileName"
-
-        // 4. Actualizar el modelo y guardar en MongoDB
-        user.profileImageUrl = newPublicUrl
-        user.updatedAt = LocalDateTime.now() // Opcional: actualizar timestamp
-        val updatedUser = userRepository.save(user)
-
-        // 5. Retorna el objeto completo de usuario
-        return ResponseEntity.ok(updatedUser)
     }
+
+    // ----------------------------------------------------
+    // 🎯 LÓGICA DE LECTURA DE FOTO (GRIDFS)
+    // ----------------------------------------------------
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/profile/photo") // Ruta completa: /users/profile/photo
+    fun getProfilePhotoUrl(): ResponseEntity<PhotoData> {
+        val userId = getAuthenticatedUserId()
+        val userOptional = userRepository.findById(userId)
+
+        if (!userOptional.isPresent) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val user = userOptional.get()
+        // Usamos la URL de descarga guardada en el perfil
+        val photoUrl = user.profileImageUrl ?: "https://placehold.co/200x200"
+
+        // Retornamos la URL de descarga al cliente
+        return ResponseEntity.ok(PhotoData(photoUrl))
+    }
+
+    // ----------------------------------------------------
+    // 🎯 LÓGICA DE SERVICIO DE ARCHIVOS (CORREGIDO)
+    // ----------------------------------------------------
+
+    // 🎯 Endpoint para SERVIR el archivo desde GridFS
+    // Nota: La ruta es /users/files/photo/{fileId} porque el @RequestMapping es /users
+    // 🎯 Endpoint para SERVIR el archivo desde GridFS (CORREGIDO)
+    // 🎯 Endpoint para SERVIR el archivo desde GridFS (CORRECCIÓN FINAL)
+    @GetMapping("/files/photo/{fileId}")
+    fun servePhoto(@PathVariable fileId: String): ResponseEntity<ByteArray> {
+        val gridFsFile = gridFsTemplate.findOne(Query.query(Criteria.where("_id").`is`(fileId)))
+
+        // 🛑 CORRECCIÓN CLAVE: Accedemos al campo 'contentType' dentro de los metadatos de GridFS.
+        // Usamos 'as String' porque sabemos que Spring lo guarda como String.
+        val contentType = gridFsFile.metadata?.get("_contentType") as? String ?: MediaType.IMAGE_JPEG_VALUE
+
+        try {
+            val resource = gridFsTemplate.getResource(gridFsFile)
+            val fileBytes = resource.inputStream.readBytes()
+
+            return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(fileBytes)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+        }
+    }
+    // ----------------------------------------------------
+    // Métodos Estándar
+    // ----------------------------------------------------
 
     // Crear usuario
     @PreAuthorize("hasRole('ADMIN')")
@@ -100,23 +164,5 @@ class UserController(private val userRepository: UserRepository) {
         } else {
             ResponseEntity.notFound().build()
         }
-    }
-
-
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/profile/photo") // Ruta completa: /users/profile/photo
-    fun getProfilePhotoUrl(): ResponseEntity<PhotoData> {
-        val userId = getAuthenticatedUserId()
-        val userOptional = userRepository.findById(userId)
-
-        if (!userOptional.isPresent) {
-            return ResponseEntity.notFound().build()
-        }
-
-        val user = userOptional.get()
-        val photoUrl = user.profileImageUrl ?: "https://placehold.co/200x200" // URL por defecto si no hay foto
-
-        // Nota: Asumo que tienes una clase de datos PhotoData(profileImageUrl: String) en tu backend
-        return ResponseEntity.ok(PhotoData(photoUrl))
     }
 }
