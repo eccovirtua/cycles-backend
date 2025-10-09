@@ -1,5 +1,6 @@
 package com.virtua.cycles.controller
 
+import com.virtua.cycles.dto.PhotoData
 import com.virtua.cycles.model.User
 import com.virtua.cycles.repository.UserRepository
 import jakarta.validation.Valid
@@ -20,25 +21,23 @@ import java.util.UUID
 class UserController(private val userRepository: UserRepository) {
 
 
-    // Ruta donde se guardarán las imágenes. Asegúrate de que esta carpeta exista.
     private val uploadDir = Paths.get("data", "profile_photos")
 
-    /**
-     * Helper para obtener el ID del usuario autenticado (asumiendo que estás usando JWT/UserDetails).
-     */
     private fun getAuthenticatedUserId(): String {
         val authentication: Authentication = SecurityContextHolder.getContext().authentication
         // Asumiendo que el 'principal' es el objeto User o tiene el ID como String
         return (authentication.principal as User).id ?: throw IllegalStateException("User ID not found in security context")
     }
 
-    // 🎯 AJUSTE CLAVE: Permite la entrada solo si el usuario está AUTENTICADO.
+
+
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/profile/photo")
     fun uploadProfilePhoto(
-        @RequestParam("photo") file: MultipartFile // El nombre del campo DEBE ser 'photo'
+        @RequestParam("photo") file: MultipartFile
+
     ): ResponseEntity<User> {
-        // Asegura que solo el usuario autenticado pueda subir su foto
+
         val userId = getAuthenticatedUserId()
         val userOptional = userRepository.findById(userId)
 
@@ -101,5 +100,23 @@ class UserController(private val userRepository: UserRepository) {
         } else {
             ResponseEntity.notFound().build()
         }
+    }
+
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/profile/photo") // Ruta completa: /users/profile/photo
+    fun getProfilePhotoUrl(): ResponseEntity<PhotoData> {
+        val userId = getAuthenticatedUserId()
+        val userOptional = userRepository.findById(userId)
+
+        if (!userOptional.isPresent) {
+            return ResponseEntity.notFound().build()
+        }
+
+        val user = userOptional.get()
+        val photoUrl = user.profileImageUrl ?: "https://placehold.co/200x200" // URL por defecto si no hay foto
+
+        // Nota: Asumo que tienes una clase de datos PhotoData(profileImageUrl: String) en tu backend
+        return ResponseEntity.ok(PhotoData(photoUrl))
     }
 }
