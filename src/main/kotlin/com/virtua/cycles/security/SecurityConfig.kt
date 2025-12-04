@@ -54,6 +54,7 @@ class SecurityConfig(
                     .requestMatchers("/", "/index.html", "/vite.svg", "/assets/**").permitAll()
                     .requestMatchers("/api/auth/register").permitAll()
                     .requestMatchers("/api/auth/login").permitAll()
+                    .requestMatchers("/ping").permitAll()
                     .requestMatchers("/api/auth/forgot-password").permitAll()
                     .requestMatchers("/api/auth/check-username").permitAll()
                     .requestMatchers("/api/recommend/**").permitAll()
@@ -62,15 +63,11 @@ class SecurityConfig(
                     .requestMatchers("/api/auth/update-username").authenticated()
                     // Permitir el resto de rutas de Auth (si son publicas y no estan listadas arriba)
                     .requestMatchers("/api/auth/**").permitAll()
-
-                    // 🎯 NUEVAS REGLAS DE PERFIL (DEBEN IR ANTES DE /users/**)
                     // Permitir acceso a la gestión de perfil para CUALQUIER USUARIO AUTENTICADO
                     .requestMatchers("/users/profile/**").authenticated()
-
                     // Reglas restringidas
                     .requestMatchers("/admin/**").hasRole("ADMIN")
-                    .requestMatchers("/users/**").hasRole("ADMIN") // Aplica a /users, /users/id, etc.
-
+                    .requestMatchers("/users/**").hasRole("ADMIN")
                     // Todas las demás rutas requieren autenticación
                     .anyRequest().authenticated()
             }

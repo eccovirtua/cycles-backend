@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory
 @RequestMapping("/api")
 class RecsController(private val recsService: RecsService) {
     private val logger = LoggerFactory.getLogger(RecsController::class.java)
-
-
     @GetMapping("/recommend/{itemId}")
     fun recommend(
         @PathVariable itemId: Int,
@@ -35,5 +33,6 @@ class RecsController(private val recsService: RecsService) {
         }
     }
 }
+
 
 

@@ -50,7 +50,7 @@ class AuthController(
             name     = req.name,
             email    = req.email,
             age      = age,
-            _password = passwordEncoder.encode(req.password),  // <— CORREGIDO
+            _password = passwordEncoder.encode(req.password),
             role     = User.Role.USER
         )
         userRepository.save(user)
@@ -117,7 +117,8 @@ class AuthController(
         userRepository.save(user)
         return ResponseEntity.ok(GenericResponse("Nombre de usuario actualizado"))
     }
-}//llave de cierre a  los endpoints
+}
+// llave de cierre a  los endpoints
 
 
 

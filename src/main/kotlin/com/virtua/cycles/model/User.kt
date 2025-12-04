@@ -27,13 +27,12 @@ data class User(
     val cratedAt: LocalDateTime = LocalDateTime.now(),
     var updatedAt: LocalDateTime = LocalDateTime.now(),
 
-    // 🎯 NUEVOS CAMPOS DE PERFIL
+    // CAMPOS DE PERFIL
     var bio: String? = null, // Biografía (puede ser opcional)
     var profileImageUrl: String? = null // URL de la foto de perfil subida
 
 
 ) : UserDetails {
-
     enum class Role {
         USER, ADMIN
     }
@@ -44,7 +43,6 @@ data class User(
     fun setPassword(newPassword: String) {
         _password = newPassword
     }
-
     override fun getUsername(): String = email
 
     override fun isAccountNonExpired(): Boolean = true
